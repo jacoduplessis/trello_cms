@@ -1,6 +1,7 @@
 import markdown
 import json
 from urllib.request import urlopen
+from .utils import cached_property
 
 
 class TLabel:
@@ -11,7 +12,7 @@ class TLabel:
         self.uses = data.get('uses')
         self.color = data.get('color')
 
-    @property
+    @cached_property
     def cards(self):
         result = []
         for card in self.board.cards:
@@ -28,7 +29,7 @@ class TList:
         self.name = payload.get('name')
         self.id = payload.get('id')
 
-    @property
+    @cached_property
     def cards(self):
         result = []
         for card in self.board.cards:
@@ -87,6 +88,7 @@ class TCardMeta:
 
 class TCard:
     def __init__(self, board, data):
+        self.id = data.get('id')
         self.board = board
         self._labels = data.get('labels')
         self.list_id = data.get('idList')
@@ -102,17 +104,25 @@ class TCard:
 
         self.meta = TCardMeta(data.get('customFieldItems', {}), board)
 
-    @property
+    @cached_property
+    def url(self):
+        slug = self.board.config.get('slug')
+        if slug is None:
+            return ''
+
+        return f'/{slug}/{self.id}.html'
+
+    @cached_property
     def description_html(self):
         return markdown.markdown(self.desc)
 
-    @property
+    @cached_property
     def list(self):
         for _list in self.board.lists:
             if _list.id == self.list_id:
                 return _list
 
-    @property
+    @cached_property
     def labels(self):
         result = []
         label_ids = [l['id'] for l in self._labels]
@@ -132,6 +142,7 @@ class TBoard:
         self.name = data.get('name')
         self.desc = data.get('desc')
         self.id = data.get('id')
+        self.config = data.get('config')
 
         # must load this before other objects
         self.custom_fields = {x['id']: x for x in data.get('customFields')}
@@ -171,7 +182,6 @@ class TPreview:
 
 
 def load_board(board_id):
-
     resp = urlopen('https://trello.com/b/{}.json'.format(board_id))
     data = json.load(resp)
     return data
