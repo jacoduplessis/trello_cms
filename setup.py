@@ -7,7 +7,7 @@ setup(
     description='Build websites with Trello data',
     url='https://github.com/jacoduplessis/trello_cms',
     keywords='trello cms ssg',
-    version='0.0.10',
+    version='0.1.0',
     packages=['trello_cms'],
     install_requires=[
         'jinja2',
